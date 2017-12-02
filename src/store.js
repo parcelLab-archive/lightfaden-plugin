@@ -35,21 +35,9 @@ var store = createStore( (action, state) => {
       action: () => {
         store({ type: 'self.close' })
         store({ type: 'startTour', payload: [
-          { 
-            title: '1',
-            text: 'Here is thy app header.',
-            attachTo: '.step-one',
-          },
-          { 
-            title: '2',
-            text: 'Here is thy app button.',
-            attachTo: '.step-two',
-          },
-          { 
-            title: '3',
-            text: 'Here is thy app heading.',
-            attachTo: '.step-three',
-          }
+          { selector: '.step-one', description: 'this is step one', showNext: true, },
+          { selector: '.step-two', description: 'this is step two', showNext: true, },
+          { selector: '.step-three', description: 'this is step three', },
         ] })
       }
     },
