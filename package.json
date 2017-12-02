@@ -1,0 +1,33 @@
+{
+  "name": "lightfaden-plugin",
+  "version": "1.0.0",
+  "description": "Lightfaden browser plugin.",
+  "main": "dist/lightfaden.bundle.js",
+  "scripts": {
+    "start": "run-p dev:*",
+    "dev:serve-test": "serve ./test -p 3000",
+    "dev:serve-dist": "serve ./dist -p 3001",
+    "dev:watch-build": "nodemon -x 'npm run build' -w src/",
+    "build": "browserify src/main.js -g yo-yoify -o dist/lightfaden.bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parcelLab/lightfaden-plugin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/parcelLab/lightfaden-plugin/issues"
+  },
+  "homepage": "https://github.com/parcelLab/lightfaden-plugin#readme",
+  "dependencies": {
+    "yo-yo": "^1.4.1"
+  },
+  "devDependencies": {
+    "browserify": "^14.5.0",
+    "nodemon": "^1.12.1",
+    "npm-run-all": "^4.1.2",
+    "serve": "^6.4.1",
+    "yo-yoify": "^4.2.0"
+  }
+}
