@@ -26,7 +26,7 @@ var store = createStore( (action, state) => {
     var tour = new window.EnjoyHint({})
     tour.set(action.payload)
     tour.run()
-    return Object.assign(state, { tour: tour })
+    return Object.assign(state, { open: false, tour: tour })
   }
 }, {
 

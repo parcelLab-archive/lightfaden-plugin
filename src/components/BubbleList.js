@@ -1,4 +1,5 @@
 var yo = require('yo-yo')
+var store = require('../store')
 
 function RobotBubble(item) {
   return yo`
@@ -17,11 +18,17 @@ function RobotBubble(item) {
 }
 
 function OwnBubble(item) {
+  var runAction = () => {
+    if (item.action) {
+      store({ type: item.action, payload: item.payload || null })
+    }
+  }
+
   return yo`
       <div class="row">
       
         <div class="eight columns offset-by-four ${item.disabled ? 'disabled' : ''}">
-          <span class="from-me shadow-1 clickable" onclick=${item.action}>
+          <span class="from-me shadow-1 clickable" onclick=${runAction}>
             ${item.text}
           </span>
         </div>

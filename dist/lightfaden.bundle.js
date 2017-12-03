@@ -1151,6 +1151,7 @@ bel0.setAttribute("id", "lightfaden--backdrop")
 
 },{"../store":13,"./BubbleList":11,"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":9,"yo-yo":7}],11:[function(require,module,exports){
 var yo = require('yo-yo')
+var store = require('../store')
 
 function RobotBubble(item) {
   return (function () {
@@ -1172,6 +1173,12 @@ ac(bel3, ["\n\n      ",bel2,"\n      \n    "])
 }
 
 function OwnBubble(item) {
+  var runAction = () => {
+    if (item.action) {
+      store({ type: item.action, payload: item.payload || null })
+    }
+  }
+
   return (function () {
       var ac = require('/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js')
       var bel2 = document.createElement("div")
@@ -1185,7 +1192,7 @@ ac(bel0, ["\n            ",arguments[1],"\n          "])
 ac(bel1, ["\n          ",bel0,"\n        "])
 ac(bel2, ["\n      \n        ",bel1,"\n      \n      "])
       return bel2
-    }(item.action,item.text,item.disabled ? 'disabled' : ''))
+    }(runAction,item.text,item.disabled ? 'disabled' : ''))
 }
 
 module.exports = function BubbleList (state) {
@@ -1205,7 +1212,7 @@ ac(bel0, ["\n      ",arguments[1],"\n    "])
     }(state.open ? '' : 'hidden',bubbles))
 }
 
-},{"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":9,"yo-yo":7}],12:[function(require,module,exports){
+},{"../store":13,"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":9,"yo-yo":7}],12:[function(require,module,exports){
 var yo = require('yo-yo')
 var App = require('./components/App')
 var store = require('./store')
@@ -1258,7 +1265,7 @@ var store = createStore( (action, state) => {
     var tour = new window.EnjoyHint({})
     tour.set(action.payload)
     tour.run()
-    return Object.assign(state, { tour: tour })
+    return Object.assign(state, { open: false, tour: tour })
   }
 }, {
 
