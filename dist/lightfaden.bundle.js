@@ -849,366 +849,6 @@ module.exports = function createNamespaceEmitter () {
 }
 
 },{}],5:[function(require,module,exports){
-/**
- * Module dependencies
- */
-
-var querystring = require('querystring');
-var assign = require('object-assign');
-var once = require('once');
-
-/**
- * Export `open`
- */
-
-module.exports = open;
-
-/**
- * Initialize `open`
- */
-
-function open(url, options, fn) {
-  options = options || {};
-
-  if (2 == arguments.length) {
-    fn = options;
-    options = {};
-  }
-
-  var str = stringify(configure(options));
-  var popup = window.open(url, options.name || '', str);
-  popup.focus();
-  poll(popup, fn);
-  return popup;
-}
-
-/**
- * Poll
- */
-
-function poll(popup, fn) {
-  var done = once(fn);
-
-  var intervalId = setInterval(function polling() {
-    try {
-      var documentOrigin = document.location.host;
-      var popupWindowOrigin = popup.location.host;
-    } catch (e) {};
-
-    if (popupWindowOrigin === documentOrigin && (popup.location.search || popup.location.hash)) {
-      var queryParams = popup.location.search.substring(1).replace(/\/$/, '');
-      var hashParams = popup.location.hash.substring(1).replace(/[\/$]/, '');
-      var hash = querystring.parse(hashParams);
-      var qs = querystring.parse(queryParams);
-
-      qs = assign(qs, hash);
-
-      if (qs.error) {
-        clearInterval(intervalId);
-        popup.close();
-        done(new Error(qs.error));
-      } else {
-        clearInterval(intervalId);
-        popup.close();
-        done(null, qs);
-      }
-    }
-
-  }, 35);
-}
-
-/**
- * Configure the popup
- */
-
-function configure(options) {
-  var width = options.width || 500;
-  var height = options.height || 500;
-  return assign({
-    width: width,
-    height: height,
-    left: window.screenX + ((window.outerWidth - width) / 2),
-    top: window.screenY + ((window.outerHeight - height) / 2.5)
-  }, options || {});
-}
-
-/**
- * Stringify
- */
-
-function stringify(obj) {
-  var parts = [];
-  for (var key in obj) {
-    parts.push(key + '=' + obj[key]);
-  }
-  return parts.join(',');
-}
-
-},{"object-assign":6,"once":7,"querystring":10}],6:[function(require,module,exports){
-'use strict';
-var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-function ToObject(val) {
-	if (val == null) {
-		throw new TypeError('Object.assign cannot be called with null or undefined');
-	}
-
-	return Object(val);
-}
-
-function ownEnumerableKeys(obj) {
-	var keys = Object.getOwnPropertyNames(obj);
-
-	if (Object.getOwnPropertySymbols) {
-		keys = keys.concat(Object.getOwnPropertySymbols(obj));
-	}
-
-	return keys.filter(function (key) {
-		return propIsEnumerable.call(obj, key);
-	});
-}
-
-module.exports = Object.assign || function (target, source) {
-	var from;
-	var keys;
-	var to = ToObject(target);
-
-	for (var s = 1; s < arguments.length; s++) {
-		from = arguments[s];
-		keys = ownEnumerableKeys(Object(from));
-
-		for (var i = 0; i < keys.length; i++) {
-			to[keys[i]] = from[keys[i]];
-		}
-	}
-
-	return to;
-};
-
-},{}],7:[function(require,module,exports){
-var wrappy = require('wrappy')
-module.exports = wrappy(once)
-module.exports.strict = wrappy(onceStrict)
-
-once.proto = once(function () {
-  Object.defineProperty(Function.prototype, 'once', {
-    value: function () {
-      return once(this)
-    },
-    configurable: true
-  })
-
-  Object.defineProperty(Function.prototype, 'onceStrict', {
-    value: function () {
-      return onceStrict(this)
-    },
-    configurable: true
-  })
-})
-
-function once (fn) {
-  var f = function () {
-    if (f.called) return f.value
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  f.called = false
-  return f
-}
-
-function onceStrict (fn) {
-  var f = function () {
-    if (f.called)
-      throw new Error(f.onceError)
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  var name = fn.name || 'Function wrapped with `once`'
-  f.onceError = name + " shouldn't be called more than once"
-  f.called = false
-  return f
-}
-
-},{"wrappy":12}],8:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-// If obj.hasOwnProperty has been overridden, then calling
-// obj.hasOwnProperty(prop) will break.
-// See: https://github.com/joyent/node/issues/1707
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-module.exports = function(qs, sep, eq, options) {
-  sep = sep || '&';
-  eq = eq || '=';
-  var obj = {};
-
-  if (typeof qs !== 'string' || qs.length === 0) {
-    return obj;
-  }
-
-  var regexp = /\+/g;
-  qs = qs.split(sep);
-
-  var maxKeys = 1000;
-  if (options && typeof options.maxKeys === 'number') {
-    maxKeys = options.maxKeys;
-  }
-
-  var len = qs.length;
-  // maxKeys <= 0 means that we should not limit keys count
-  if (maxKeys > 0 && len > maxKeys) {
-    len = maxKeys;
-  }
-
-  for (var i = 0; i < len; ++i) {
-    var x = qs[i].replace(regexp, '%20'),
-        idx = x.indexOf(eq),
-        kstr, vstr, k, v;
-
-    if (idx >= 0) {
-      kstr = x.substr(0, idx);
-      vstr = x.substr(idx + 1);
-    } else {
-      kstr = x;
-      vstr = '';
-    }
-
-    k = decodeURIComponent(kstr);
-    v = decodeURIComponent(vstr);
-
-    if (!hasOwnProperty(obj, k)) {
-      obj[k] = v;
-    } else if (isArray(obj[k])) {
-      obj[k].push(v);
-    } else {
-      obj[k] = [obj[k], v];
-    }
-  }
-
-  return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],9:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-var stringifyPrimitive = function(v) {
-  switch (typeof v) {
-    case 'string':
-      return v;
-
-    case 'boolean':
-      return v ? 'true' : 'false';
-
-    case 'number':
-      return isFinite(v) ? v : '';
-
-    default:
-      return '';
-  }
-};
-
-module.exports = function(obj, sep, eq, name) {
-  sep = sep || '&';
-  eq = eq || '=';
-  if (obj === null) {
-    obj = undefined;
-  }
-
-  if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
-      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
-        return map(obj[k], function(v) {
-          return ks + encodeURIComponent(stringifyPrimitive(v));
-        }).join(sep);
-      } else {
-        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-      }
-    }).join(sep);
-
-  }
-
-  if (!name) return '';
-  return encodeURIComponent(stringifyPrimitive(name)) + eq +
-         encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
-};
-
-},{}],10:[function(require,module,exports){
-'use strict';
-
-exports.decode = exports.parse = require('./decode');
-exports.encode = exports.stringify = require('./encode');
-
-},{"./decode":8,"./encode":9}],11:[function(require,module,exports){
 var createEmitter = require('namespace-emitter')
 var isPlainObject = require('is-plain-object')
 var extend = require('xtend')
@@ -1347,42 +987,7 @@ module.exports = function createStore (modifier, initialState) {
   }
 }
 
-},{"is-plain-object":1,"namespace-emitter":4,"xtend":13}],12:[function(require,module,exports){
-// Returns a wrapper function that returns a wrapped callback
-// The wrapper function should do some stuff, and return a
-// presumably different callback function.
-// This makes sure that own properties are retained, so that
-// decorations and such are not lost along the way.
-module.exports = wrappy
-function wrappy (fn, cb) {
-  if (fn && cb) return wrappy(fn)(cb)
-
-  if (typeof fn !== 'function')
-    throw new TypeError('need wrapper function')
-
-  Object.keys(fn).forEach(function (k) {
-    wrapper[k] = fn[k]
-  })
-
-  return wrapper
-
-  function wrapper() {
-    var args = new Array(arguments.length)
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i]
-    }
-    var ret = fn.apply(this, args)
-    var cb = args[args.length-1]
-    if (typeof ret === 'function' && ret !== cb) {
-      Object.keys(cb).forEach(function (k) {
-        ret[k] = cb[k]
-      })
-    }
-    return ret
-  }
-}
-
-},{}],13:[function(require,module,exports){
+},{"is-plain-object":1,"namespace-emitter":4,"xtend":6}],6:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -1403,7 +1008,7 @@ function extend() {
     return target
 }
 
-},{}],14:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var bel = {} // turns template tag into DOM elements
 var morphdom = require('morphdom') // efficiently diffs + morphs two DOM elements
 var defaultEvents = require('./update-events.js') // default events to be copied when dom elements update
@@ -1447,7 +1052,7 @@ module.exports.update = function (fromNode, toNode, opts) {
   }
 }
 
-},{"./update-events.js":15,"morphdom":3}],15:[function(require,module,exports){
+},{"./update-events.js":8,"morphdom":3}],8:[function(require,module,exports){
 module.exports = [
   // attribute events (can be set with attributes)
   'onclick',
@@ -1485,7 +1090,7 @@ module.exports = [
   'onfocusout'
 ]
 
-},{}],16:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function yoyoifyAppendChild (el, childs) {
   for (var i = 0; i < childs.length; i++) {
     var node = childs[i]
@@ -1513,7 +1118,7 @@ module.exports = function yoyoifyAppendChild (el, childs) {
   }
 }
 
-},{}],17:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var yo = require('yo-yo')
 var store = require('../store')
 var BubbleList = require('./BubbleList')
@@ -1521,9 +1126,11 @@ var BubbleList = require('./BubbleList')
 module.exports = function App (state) {
 
   var toggleSelf = function () {
-    if (state.open) return store({ type: 'self.close' })
-    else return store({ type: 'self.open' })
+    if (state.open) return store({ type: 'CLOSE' })
+    else return store({ type: 'OPEN' })
   }
+
+  var bubbleList = new BubbleList(state)
 
   return (function () {
       var ac = require('/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js')
@@ -1539,10 +1146,10 @@ ac(bel1, ["\n      ",arguments[1],"\n\n      ",arguments[2],"\n\n      ",bel0,"\
       var bel0 = document.createElement("div")
 bel0.setAttribute("id", "lightfaden--backdrop")
       return bel0
-    }()) : '',new BubbleList(state)))
+    }()) : '',bubbleList))
 }
 
-},{"../store":20,"./BubbleList":18,"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":16,"yo-yo":14}],18:[function(require,module,exports){
+},{"../store":13,"./BubbleList":11,"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":9,"yo-yo":7}],11:[function(require,module,exports){
 var yo = require('yo-yo')
 
 function RobotBubble(item) {
@@ -1583,6 +1190,11 @@ ac(bel2, ["\n      \n        ",bel1,"\n      \n      "])
 
 module.exports = function BubbleList (state) {
 
+  var bubbles = state.view.map(ci => {
+    if (ci.robot) return new RobotBubble(ci)
+    else return new OwnBubble(ci)
+  })
+
   return (function () {
       var ac = require('/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js')
       var bel0 = document.createElement("div")
@@ -1590,23 +1202,17 @@ bel0.setAttribute("id", "lightfaden--bubble-list-wrapper")
 bel0.setAttribute("class", arguments[0])
 ac(bel0, ["\n      ",arguments[1],"\n    "])
       return bel0
-    }(state.open ? '' : 'hidden',state.currentView ? state.currentView.map(ci => {
-    if (ci.robot) return new RobotBubble(ci)
-    else return new OwnBubble(ci)
-  }) : ''))
+    }(state.open ? '' : 'hidden',bubbles))
 }
 
-},{"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":16,"yo-yo":14}],19:[function(require,module,exports){
+},{"/Users/andrej/Workspace/parcelLab/lightfaden-plugin/node_modules/yo-yoify/lib/appendChild.js":9,"yo-yo":7}],12:[function(require,module,exports){
 var yo = require('yo-yo')
 var App = require('./components/App')
 var store = require('./store')
 
-function LightFaden(userId, hash) {
+function LightFaden(userId) {
   this.store = store
-  this.store({ type: 'set', payload: {
-    userId: userId,
-    hash: hash,
-  } })
+  this.store({ type: 'SET_USERID', payload: userId })
 }
 
 LightFaden.prototype.init = function () {
@@ -1616,76 +1222,51 @@ LightFaden.prototype.init = function () {
     this.element = yo.update(this.element, new App(state))
   })
 
+  this.store({ type: 'FETCH_VIEW' })
+
   document.body.appendChild(this.element)
 }
 
 window.LightFaden = LightFaden
 
-},{"./components/App":17,"./store":20,"yo-yo":14}],20:[function(require,module,exports){
+},{"./components/App":10,"./store":13,"yo-yo":7}],13:[function(require,module,exports){
 var createStore = require('store-emitter')
-var open = require('oauth-open')
 
 var store = createStore( (action, state) => {
-  if (action.type === 'set') {
-    return Object.assign(state, action.payload)
+  if (action.type === 'FETCH_VIEW') {
+    fetch(`https://api.lightfaden.io/lightfaden?userId=${state.userId}&route=${encodeURIComponent(window.location.pathname)}`, {
+      method: 'GET',
+    })
+      .then(res => res.json())
+      .then(data => store({ type: 'SET_VIEW', payload: data }))
+      .catch(err => console.log(err))
+    return state
   }
-  if (action.type === 'self.open') {
+  if (action.type === 'SET_USERID') {
+    return Object.assign(state, { user: action.payload })
+  }
+  if (action.type === 'OPEN') {
     return Object.assign(state, { open: true })
   }
-  if (action.type === 'self.close') {
+  if (action.type === 'CLOSE') {
     return Object.assign(state, { open: false })
   }
-  if (action.type === 'updateView') {
-    return Object.assign(state, { currentView: action.payload })
+  if (action.type === 'SET_VIEW') {
+    return Object.assign(state, { view: action.payload })
   }
-  if (action.type === 'startTour') {
+  if (action.type === 'START_TOUR') {
     var tour = new window.EnjoyHint({})
     tour.set(action.payload)
     tour.run()
     return Object.assign(state, { tour: tour })
   }
 }, {
+
   userId: null,
-  hash: null,
   open: false,
-  currentView: [
-    {
-      robot: true,
-      text: 'Hello friend. How can I help you today?',
-    },
+  view: [ { robot: true, text: '...' } ]
 
-    {
-      text: 'Please show me the features of this app.',
-      action: () => {
-        store({ type: 'self.close' })
-        store({ type: 'startTour', payload: [
-          { selector: '.step-one', description: 'this is step one', showNext: true, },
-          { selector: '.step-two', description: 'this is step two', showNext: true, },
-          { selector: '.step-three', description: 'this is step three', },
-        ] })
-      }
-    },
-
-    {
-      text: 'I want to finish my registration.',
-      action: () => {
-        store({ type: 'updateView', payload: [{ robot: true, text: '...'}] })
-      }
-    },
-
-    {
-      text: 'I need to see my bill!',
-      // disabled: true,
-      action: () => {
-        open('https://simulator-api.db.com/gw/oidc/authorize?response_type=token&redirect_uri=http%3A%2F%2Flocalhost:3000%2F&client_id=f5a56768-3f73-494c-bc73-78a2b1f12c49&state=abc', (err, code) => {
-          if (err) console.log(err)
-          else console.log('SUCCESS ', code)
-        })
-
-      }
-    },
-  ]
 })
 
 module.exports = store
-},{"oauth-open":5,"store-emitter":11}]},{},[19]);
+},{"store-emitter":5}]},{},[12]);

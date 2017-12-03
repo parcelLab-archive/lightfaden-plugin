@@ -2,12 +2,9 @@ var yo = require('yo-yo')
 var App = require('./components/App')
 var store = require('./store')
 
-function LightFaden(userId, hash) {
+function LightFaden(userId) {
   this.store = store
-  this.store({ type: 'set', payload: {
-    userId: userId,
-    hash: hash,
-  } })
+  this.store({ type: 'SET_USERID', payload: userId })
 }
 
 LightFaden.prototype.init = function () {
@@ -16,6 +13,8 @@ LightFaden.prototype.init = function () {
   this.store.on('*', (action, state)=> {
     this.element = yo.update(this.element, new App(state))
   })
+
+  this.store({ type: 'FETCH_VIEW' })
 
   document.body.appendChild(this.element)
 }

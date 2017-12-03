@@ -21,8 +21,6 @@
   },
   "homepage": "https://github.com/parcelLab/lightfaden-plugin#readme",
   "dependencies": {
-    "chat-bubble": "^1.2.3",
-    "oauth-open": "^1.0.3",
     "store-emitter": "^2.2.0",
     "yo-yo": "^1.4.1"
   },
