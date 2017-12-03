@@ -14,7 +14,7 @@ LightFaden.prototype.init = function () {
     this.element = yo.update(this.element, new App(state))
   })
 
-  this.store({ type: 'FETCH_VIEW' })
+  this.store({ type: 'FETCH_INIT' })
 
   document.body.appendChild(this.element)
 }

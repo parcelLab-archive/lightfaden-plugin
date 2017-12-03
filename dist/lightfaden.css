@@ -487,6 +487,10 @@ there.
   font-size: 20px;
 }
 
+.mo-hover {
+  border: 2px solid red !important;
+}
+
 .hidden {
   display: none;
 }

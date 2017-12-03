@@ -39,10 +39,10 @@ function OwnBubble(item) {
 
 module.exports = function BubbleList (state) {
 
-  var bubbles = state.view.map(ci => {
+  var bubbles = state.view ? state.view.map(ci => {
     if (ci.robot) return new RobotBubble(ci)
     else return new OwnBubble(ci)
-  })
+  }) : ''
 
   return yo`
     <div id="lightfaden--bubble-list-wrapper" class="${ state.open ? '' : 'hidden' }">
